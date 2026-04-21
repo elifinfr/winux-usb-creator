@@ -1,0 +1,22 @@
+# ISO téléchargées
+*.iso
+
+# Logs
+*.log
+
+# Répertoires temporaires
+/tmp/
+tmp/
+
+# Artefacts Ventoy extraits
+ventoy-*/
+
+# Fichiers OS
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+*~

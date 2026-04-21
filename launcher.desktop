@@ -1,0 +1,16 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Winux USB Creator
+Name[fr]=Créateur de clé USB Winux
+Comment=Créer une clé USB bootable de Winux via Ventoy
+Comment[fr]=Créer une clé USB bootable de Winux via Ventoy
+GenericName=USB Installer
+Icon=drive-removable-media-usb
+Terminal=false
+Categories=System;Utility;
+Keywords=usb;winux;linuxfx;ventoy;iso;boot;
+# Lance un terminal et exécute install.sh depuis le dossier du .desktop.
+# %k = chemin du .desktop lui-même → dirname %k = dossier du projet.
+# On essaie gnome-terminal, puis konsole, puis xterm.
+Exec=sh -c 'DIR="$(dirname "%k")"; cd "$DIR" && { gnome-terminal -- bash -c "./install.sh; echo; read -p \"Appuyez sur Entrée pour fermer...\" _" 2>/dev/null || konsole -e bash -c "./install.sh; echo; read -p \"Appuyez sur Entrée...\" _" 2>/dev/null || xterm -e bash -c "./install.sh; echo; read -p \"Appuyez sur Entrée...\" _"; }'
