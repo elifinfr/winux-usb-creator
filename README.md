@@ -21,7 +21,7 @@ Windows 11), via **Ventoy** afin de permettre un démarrage multi-ISO.
 ## Installation
 
 ```bash
-git clone https://github.com/<votre-utilisateur>/winux-usb-creator.git
+git clone https://github.com/elifinfr/winux-usb-creator.git
 cd winux-usb-creator
 chmod +x install.sh lib/*.sh
 ```
