@@ -142,13 +142,42 @@ check_dependencies() {
 # Validation d'un chemin /dev/sdX (sécurité)
 # ---------------------------------------------------------------------------
 # N'accepte QUE /dev/sd[a-z] (pas de partition /dev/sdb1, pas de /dev/nvme…)
-# Refuse /dev/sda qui est généralement le disque système.
+# Refuse /dev/sda par défaut car c'est généralement le disque système.
+# Possibilité de forcer via la variable d'environnement ALLOW_SDA=1
+# (cas typique : machine 100 % NVMe où la clé USB tombe sur /dev/sda).
 is_safe_usb_device() {
     local dev="$1"
     if [[ ! "$dev" =~ ^/dev/sd[a-z]$ ]]; then
         return 1
     fi
     if [[ "$dev" == "/dev/sda" ]]; then
+        if [[ "${ALLOW_SDA:-0}" == "1" ]]; then
+            return 0
+        fi
+        return 1
+    fi
+    return 0
+}
+
+# ---------------------------------------------------------------------------
+# Vérifie qu'un /dev/sdX n'est PAS le disque système (racine /)
+# Retourne 0 si c'est sûr (différent du disque /), 1 si c'est le disque système.
+# ---------------------------------------------------------------------------
+is_not_system_disk() {
+    local dev="$1"
+    # Périphérique sur lequel "/" est monté (ex: /dev/nvme0n1p2 → /dev/nvme0n1)
+    local root_src root_disk
+    root_src=$(findmnt -no SOURCE / 2>/dev/null || echo "")
+    if [[ -z "$root_src" ]]; then
+        # On ne peut pas vérifier — par sécurité on refuse
+        return 1
+    fi
+    # Remonte au disque parent (ex: sda1 → sda, nvme0n1p2 → nvme0n1)
+    root_disk=$(lsblk -no PKNAME "$root_src" 2>/dev/null | head -n1)
+    [[ -z "$root_disk" ]] && root_disk=$(basename "$root_src" | sed -E 's/[0-9]+$//; s/p$//')
+    local dev_name
+    dev_name=$(basename "$dev")
+    if [[ "$dev_name" == "$root_disk" ]]; then
         return 1
     fi
     return 0

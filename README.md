@@ -72,11 +72,26 @@ chmod +x install.sh lib/*.sh
 
 ### Le script refuse `/dev/sda`
 
-C'est voulu. `/dev/sda` est quasi toujours le disque système. Le script
-n'accepte que `/dev/sdb`, `/dev/sdc`, etc. Si votre clé USB est vraiment
-détectée en `/dev/sda` (ex : machine en NVMe uniquement avec un seul disque
-SATA USB), il faut adapter la fonction `is_safe_usb_device` dans
-`lib/utils.sh`.
+C'est voulu **par défaut** : `/dev/sda` est presque toujours le disque
+système, et l'écraser détruirait l'installation Linux.
+
+Cas légitime où la clé USB tombe sur `/dev/sda` : machines **100 % NVMe**
+(le système est sur `/dev/nvme0n1`, donc le premier disque SATA/USB qui
+arrive prend la lettre `sda`).
+
+Dans ce cas, deux solutions :
+
+1. **Mode interactif** : le script détecte `/dev/sda`, vérifie que ce n'est
+   PAS le disque qui héberge `/`, et vous demande explicitement
+   l'autorisation. Répondez `o` pour continuer.
+2. **Mode forcé** (non interactif, scripts CI, etc.) :
+   ```bash
+   ALLOW_SDA=1 ./install.sh
+   ```
+
+Le script vérifie systématiquement via `findmnt /` que la cible n'est pas le
+disque système, même avec `ALLOW_SDA=1`. Si c'est le cas, il refuse
+catégoriquement.
 
 ### « Aucun nouveau périphérique USB détecté »
 

@@ -137,9 +137,39 @@ detect_usb() {
             # Étape 7 : validation sécurité du chemin
             local target="/dev/$name"
             if ! is_safe_usb_device "$target"; then
-                error "Périphérique $target refusé par la règle de sécurité."
-                error "Seuls /dev/sdb, /dev/sdc, etc. sont acceptés (pas /dev/sda)."
-                continue
+                # Cas particulier : /dev/sda. Sur certaines machines (100% NVMe,
+                # ou pas de disque SATA interne), la clé USB tombe légitimement
+                # sur /dev/sda. On vérifie alors que ce n'est pas le disque
+                # système, et on demande confirmation.
+                if [[ "$target" == "/dev/sda" ]]; then
+                    warn "La clé a été détectée sur /dev/sda."
+                    warn "Par défaut, ce script refuse /dev/sda car c'est généralement le disque système."
+                    info "Vérification : /dev/sda est-il le disque système ?"
+
+                    if ! is_not_system_disk "$target"; then
+                        error "/dev/sda héberge actuellement le système (racine /)."
+                        error "Refus catégorique — l'écraser détruirait votre installation Linux."
+                        error "La clé USB doit être branchée sur un autre port ou détectée différemment."
+                        continue
+                    fi
+
+                    ok "/dev/sda n'est PAS le disque système (racine sur un autre disque)."
+                    warn "Cela arrive sur les machines 100 % NVMe : la clé USB devient /dev/sda."
+                    if ! confirm "Autoriser exceptionnellement l'utilisation de /dev/sda ?" "n"; then
+                        warn "Annulé. Branchez la clé sur un autre port USB ou relancez avec ALLOW_SDA=1."
+                        continue
+                    fi
+                    # Active la règle pour la suite de l'exécution
+                    export ALLOW_SDA=1
+                    if ! is_safe_usb_device "$target"; then
+                        error "Validation toujours refusée — abandon."
+                        continue
+                    fi
+                else
+                    error "Périphérique $target refusé par la règle de sécurité."
+                    error "Seuls /dev/sdb, /dev/sdc, etc. sont acceptés."
+                    continue
+                fi
             fi
 
             # Confirmation explicite — toutes les données seront effacées
